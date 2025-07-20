@@ -71,7 +71,7 @@ if (process.env.VITE_RAZORPAY_KEY_ID && process.env.VITE_RAZORPAY_KEY_SECRET) {
 // Enable CORS for all routes
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://speaksutra-frontend.onrender.com', 'https://your-frontend-domain.onrender.com']
+    ? ['https://speaksutra-frontend.onrender.com'] // Replace with your actual frontend URL
     : 'http://localhost:5173',
   methods: ['GET', 'POST'],
   credentials: true,
