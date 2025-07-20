@@ -56,7 +56,11 @@ const AdminDashboard = () => {
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3000/api/customers');
+      const apiUrl = import.meta.env.PROD 
+        ? 'https://speaksutra-backend.onrender.com/api/customers'
+        : 'http://localhost:3000/api/customers';
+      
+      const response = await fetch(apiUrl);
       if (!response.ok) {
         throw new Error('Failed to fetch customers');
       }

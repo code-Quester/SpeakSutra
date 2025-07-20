@@ -75,7 +75,9 @@ if (process.env.VITE_RAZORPAY_KEY_ID && process.env.VITE_RAZORPAY_KEY_SECRET) {
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite dev server
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://speaksutra-frontend.onrender.com', 'https://your-frontend-domain.onrender.com']
+    : 'http://localhost:5173',
   methods: ['GET', 'POST'],
   credentials: true,
 }));
@@ -131,6 +133,9 @@ router.post('/create-customer-order', (async (req: Request<{}, {}, CreateOrderRe
     };
 
     console.log('Creating Razorpay order with options:', options);
+    if (!razorpay) {
+      throw new Error('Razorpay not initialized');
+    }
     const order = await razorpay.orders.create(options);
     console.log('Order created:', order);
 

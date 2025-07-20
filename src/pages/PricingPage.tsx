@@ -29,7 +29,11 @@ const PricingPage = () => {
       console.log('Razorpay Key:', import.meta.env.VITE_RAZORPAY_KEY_ID);
 
       // Create customer and order
-      const response = await fetch('http://localhost:3000/api/create-customer-order', {
+      const apiUrl = import.meta.env.PROD 
+        ? 'https://speaksutra-backend.onrender.com/api/create-customer-order'
+        : 'http://localhost:3000/api/create-customer-order';
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -60,7 +64,11 @@ const PricingPage = () => {
         handler: async function (response: any) {
           try {
             // Verify payment
-            const verifyResponse = await fetch('http://localhost:3000/api/verify-payment', {
+            const verifyApiUrl = import.meta.env.PROD 
+              ? 'https://speaksutra-backend.onrender.com/api/verify-payment'
+              : 'http://localhost:3000/api/verify-payment';
+            
+            const verifyResponse = await fetch(verifyApiUrl, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

@@ -31,7 +31,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Only check enrollment when explicitly needed, not on app load
   const checkEnrollment = async (customerId: string): Promise<boolean> => {
     try {
-      const response = await fetch(`http://localhost:3000/api/verify-enrollment`, {
+      const apiUrl = import.meta.env.PROD 
+        ? 'https://speaksutra-backend.onrender.com/api/verify-enrollment'
+        : 'http://localhost:3000/api/verify-enrollment';
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
