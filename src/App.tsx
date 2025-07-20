@@ -12,6 +12,19 @@ import Footer from './components/Footer';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
+// Test component for debugging
+const TestPage = () => (
+  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="text-center">
+      <h1 className="text-3xl font-bold text-gray-900 mb-4">Test Page</h1>
+      <p className="text-gray-600">This is a test page to verify routing is working.</p>
+      <a href="/admin" className="text-blue-600 hover:text-blue-800 mt-4 inline-block">
+        Go to Admin
+      </a>
+    </div>
+  </div>
+);
+
 // Component to conditionally render navbar
 const AppContent = () => {
   const location = useLocation();
@@ -33,6 +46,7 @@ const AppContent = () => {
           } />
           <Route path="/success" element={<SuccessPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/test" element={<TestPage />} />
         </Routes>
       </main>
       {!isAdminPage && <Footer />}
