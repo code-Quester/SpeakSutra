@@ -48,9 +48,8 @@ const customerSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Create indexes for better query performance
+// Create indexes for better query performance (removed duplicate orderId index)
 customerSchema.index({ email: 1 });
-customerSchema.index({ orderId: 1 });
 customerSchema.index({ razorpayOrderId: 1 });
 customerSchema.index({ paymentStatus: 1 });
 customerSchema.index({ createdAt: -1 });

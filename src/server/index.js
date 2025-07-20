@@ -34,11 +34,16 @@ if (!process.env.VITE_RAZORPAY_KEY_ID || !process.env.VITE_RAZORPAY_KEY_SECRET |
 // Initialize email service (optional for development)
 let emailService = null;
 try {
-  emailService = new EmailService();
-  console.log('Email service initialized successfully');
+  if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+    emailService = new EmailService();
+    console.log('✅ Email service initialized successfully');
+  } else {
+    console.log('ℹ️  Email service not configured - emails will not be sent');
+    console.log('ℹ️  To enable emails, set EMAIL_USER and EMAIL_PASSWORD environment variables');
+  }
 } catch (error) {
-  console.warn('Email service not configured - emails will not be sent');
-  console.warn('To enable emails, set EMAIL_USER and EMAIL_PASSWORD environment variables');
+  console.log('⚠️  Email service initialization failed:', error.message);
+  console.log('ℹ️  Emails will not be sent');
 }
 
 // Connect to MongoDB (or use mock in development)
