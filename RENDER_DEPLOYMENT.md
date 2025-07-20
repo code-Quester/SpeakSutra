@@ -93,7 +93,7 @@ After frontend deployment, note your frontend URL (e.g., `https://speaksutra-fro
 ### 4.2 Update Backend CORS
 In your backend service, update the CORS origin to include your frontend URL:
 
-```typescript
+```javascript
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://speaksutra-frontend.onrender.com']
@@ -156,7 +156,7 @@ VITE_RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxx
 1. **Build Failures**
    - Check build logs in Render
    - Ensure all dependencies are in package.json
-   - Verify TypeScript compilation
+   - Verify JavaScript syntax
 
 2. **CORS Errors**
    - Update CORS origins in backend
