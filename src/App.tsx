@@ -8,6 +8,8 @@ import CourseStructurePage from './pages/CourseStructurePage';
 import CoursePage from './pages/CoursePage';
 import SuccessPage from './pages/SuccessPage';
 import AdminDashboard from './pages/AdminDashboard';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import Footer from './components/Footer';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -47,6 +49,8 @@ const AppContent = () => {
           <Route path="/success" element={<SuccessPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/test" element={<TestPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
         </Routes>
       </main>
       {!isAdminPage && <Footer />}

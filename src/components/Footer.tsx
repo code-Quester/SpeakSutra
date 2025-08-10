@@ -16,7 +16,7 @@ const Footer = () => {
             <p className="text-neutral-400 mb-6">
               Helping individuals unlock their public speaking potential and communicate with confidence.
             </p>
-            <div className="flex space-x-4">
+            {/* <div className="flex space-x-4">
               <a href="#" className="text-neutral-400 hover:text-white transition-colors">
                 <Facebook className="w-5 h-5" />
               </a>
@@ -29,7 +29,7 @@ const Footer = () => {
               <a href="#" className="text-neutral-400 hover:text-white transition-colors">
                 <Linkedin className="w-5 h-5" />
               </a>
-            </div>
+            </div> */}
           </div>
           
           <div>
@@ -54,6 +54,18 @@ const Footer = () => {
           </div>
           
           <div>
+            <h3 className="text-lg font-semibold mb-4">Privacy & Terms</h3>
+            <ul className="space-y-3">
+              <li>
+                <a href="/privacy-policy" className="text-neutral-400 hover:text-white transition-colors">Privacy Policy</a>
+              </li>
+              <li>
+                <a href="/terms-of-service" className="text-neutral-400 hover:text-white transition-colors">Terms of Service</a>
+              </li>
+            </ul>
+          </div>
+          
+          {/* <div>
             <h3 className="text-lg font-semibold mb-4">Resources</h3>
             <ul className="space-y-3">
               <li>
@@ -72,14 +84,14 @@ const Footer = () => {
                 <a href="#" className="text-neutral-400 hover:text-white transition-colors">Support</a>
               </li>
             </ul>
-          </div>
+          </div> */}
           
           <div>
             <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <Mail className="w-5 h-5 text-neutral-400 mt-0.5" />
-                <a href="mailto:infospeaksutra@gmail.com" className="text-neutral-400 hover:text-white transition-colors">infospeaksutra@gmail.com</a>
+                <a href="https://mail.google.com/mail/?view=cm&fs=1&to=infospeaksutra@gmail.com" className="text-neutral-400 hover:text-white transition-colors">infospeaksutra@gmail.com</a>
               </li>
               <li className="flex items-start gap-3">
                 <Phone className="w-5 h-5 text-neutral-400 mt-0.5" />
