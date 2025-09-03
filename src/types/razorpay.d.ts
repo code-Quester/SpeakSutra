@@ -28,4 +28,11 @@ declare module 'razorpay' {
   }
 
   export = Razorpay;
+}
+
+// Global Razorpay types for browser usage
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
 } 

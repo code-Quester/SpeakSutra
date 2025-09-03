@@ -13,12 +13,29 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Load environment variables from root .env file
-dotenv.config({ path: '../../.env' });
+const envPath = '../../.env';
+console.log('Loading .env from path:', envPath);
+
+dotenv.config({ path: envPath });
+
+// Alternative paths if first one doesn't work
+if (!process.env.RAZORPAY_KEY_ID) {
+  console.log('Trying alternative path: ../../../.env');
+  dotenv.config({ path: '../../../.env' });
+}
+
+if (!process.env.RAZORPAY_KEY_ID) {
+  console.log('Trying current directory: .env');
+  dotenv.config({ path: '.env' });
+}
+
+// Force development mode for local testing
+process.env.NODE_ENV = 'development';
 
 // Log environment variables (without sensitive data)
 console.log('Server starting with configuration:');
-console.log('RAZORPAY_KEY_ID:', process.env.VITE_RAZORPAY_KEY_ID ? 'Present' : 'Missing');
-console.log('RAZORPAY_KEY_SECRET:', process.env.VITE_RAZORPAY_KEY_SECRET ? 'Present' : 'Missing');
+console.log('RAZORPAY_KEY_ID:', process.env.RAZORPAY_KEY_ID ? 'Present' : 'Missing');
+console.log('RAZORPAY_KEY_SECRET:', process.env.RAZORPAY_KEY_SECRET ? 'Present' : 'Missing');
 console.log('MONGODB_URI:', process.env.MONGODB_URI ? 'Present' : 'Missing');
 console.log('EMAIL_USER:', process.env.EMAIL_USER ? 'Present' : 'Missing');
 console.log('EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD ? 'Present' : 'Missing');
@@ -27,7 +44,7 @@ console.log('PORT:', process.env.PORT || 3000);
 // Check if we're in development mode
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
-if (!process.env.VITE_RAZORPAY_KEY_ID || !process.env.VITE_RAZORPAY_KEY_SECRET || !process.env.MONGODB_URI) {
+if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET || !process.env.MONGODB_URI) {
   if (isDevelopment) {
     console.warn('⚠️  Development mode: Using mock configuration');
     console.warn('⚠️  For full functionality, set up environment variables');
@@ -62,10 +79,10 @@ const router = Router();
 
 // Initialize Razorpay (or use mock in development)
 let razorpay: Razorpay | null = null;
-if (process.env.VITE_RAZORPAY_KEY_ID && process.env.VITE_RAZORPAY_KEY_SECRET) {
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
   razorpay = new Razorpay({
-    key_id: process.env.VITE_RAZORPAY_KEY_ID,
-    key_secret: process.env.VITE_RAZORPAY_KEY_SECRET,
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
   });
 } else if (isDevelopment) {
   console.warn('⚠️  Development mode: Razorpay initialization skipped');
@@ -184,7 +201,7 @@ router.post('/verify-payment', (async (req: Request<{}, {}, VerifyPaymentRequest
 
     const body = razorpay_order_id + '|' + razorpay_payment_id;
     const expectedSignature = crypto
-      .createHmac('sha256', process.env.VITE_RAZORPAY_KEY_SECRET!)
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
       .update(body.toString())
       .digest('hex');
 
@@ -301,6 +318,139 @@ router.get('/customers', (async (req: Request, res: Response) => {
     console.error('Error fetching customers:', error);
     res.status(500).json({ 
       error: 'Error fetching customers',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}) as RequestHandler);
+
+// Webhook handler functions
+async function handlePaymentCaptured(payload: any) {
+  try {
+    const orderId = payload.payment.entity.order_id;
+    const paymentId = payload.payment.entity.id;
+    
+    console.log('Payment captured for order:', orderId);
+    
+    // Update customer payment status
+    const customer = await Customer.findOne({ razorpayOrderId: orderId });
+    if (customer) {
+      customer.paymentStatus = 'completed';
+      customer.razorpayPaymentId = paymentId;
+      await customer.save();
+      console.log('Customer payment status updated to completed:', customer._id);
+      
+      // Send welcome emails
+      if (emailService) {
+        try {
+          const whatsappLink = 'https://chat.whatsapp.com/EUs6LO0CtPi4ETAJfqKNV4';
+          const amount = '1,499';
+          
+          await emailService.sendPaymentConfirmationEmail(
+            customer.name,
+            customer.email,
+            customer.orderId,
+            amount
+          );
+          
+          await emailService.sendWelcomeEmail(
+            customer.name,
+            customer.email,
+            whatsappLink
+          );
+          
+          console.log('Welcome emails sent via webhook for:', customer.email);
+        } catch (emailError) {
+          console.error('Error sending emails via webhook:', emailError);
+        }
+      }
+    } else {
+      console.warn('Customer not found for webhook order:', orderId);
+    }
+  } catch (error) {
+    console.error('Error handling payment captured webhook:', error);
+  }
+}
+
+async function handlePaymentFailed(payload: any) {
+  try {
+    const orderId = payload.payment.entity.order_id;
+    console.log('Payment failed for order:', orderId);
+    
+    // Update customer payment status
+    const customer = await Customer.findOne({ razorpayOrderId: orderId });
+    if (customer) {
+      customer.paymentStatus = 'failed';
+      await customer.save();
+      console.log('Customer payment status updated to failed:', customer._id);
+    }
+  } catch (error) {
+    console.error('Error handling payment failed webhook:', error);
+  }
+}
+
+async function handleOrderPaid(payload: any) {
+  try {
+    const orderId = payload.order.entity.id;
+    console.log('Order paid for order:', orderId);
+    
+    // This event is similar to payment.captured, but we'll handle it separately
+    // for better logging and potential future differences
+    await handlePaymentCaptured(payload);
+  } catch (error) {
+    console.error('Error handling order paid webhook:', error);
+  }
+}
+
+// Webhook endpoint for Razorpay payment updates
+router.post('/webhook', (async (req: Request, res: Response) => {
+  try {
+    const signature = req.headers['x-razorpay-signature'] as string;
+    const body = JSON.stringify(req.body);
+    
+    if (!signature) {
+      console.error('Webhook: Missing signature header');
+      return res.status(400).json({ error: 'Missing signature header' });
+    }
+
+    if (!process.env.RAZORPAY_KEY_SECRET) {
+      console.error('Webhook: RAZORPAY_KEY_SECRET not configured');
+      return res.status(500).json({ error: 'Webhook secret not configured' });
+    }
+
+    // Verify webhook signature
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(body)
+      .digest('hex');
+
+    if (signature !== expectedSignature) {
+      console.error('Webhook: Invalid signature');
+      return res.status(400).json({ error: 'Invalid signature' });
+    }
+
+    const { event, payload } = req.body;
+    console.log('Webhook received:', { event, orderId: payload?.payment?.entity?.order_id });
+
+    // Handle different webhook events
+    switch (event) {
+      case 'payment.captured':
+        await handlePaymentCaptured(payload);
+        break;
+      case 'payment.failed':
+        await handlePaymentFailed(payload);
+        break;
+      case 'order.paid':
+        await handleOrderPaid(payload);
+        break;
+      default:
+        console.log('Webhook: Unhandled event type:', event);
+    }
+
+    res.status(200).json({ received: true });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    res.status(500).json({ 
+      error: 'Webhook processing failed',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
   }

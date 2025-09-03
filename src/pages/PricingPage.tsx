@@ -22,16 +22,33 @@ const PricingPage = () => {
 
   const handleEnrollNow = async () => {
     try {
+      // Validate form before proceeding
+      if (!isFormValid) {
+        setError('Please fill in all required fields correctly.');
+        console.error('Form validation failed:', { isFormValid, isFullNameValid, isWhatsappValid, isEmailValid });
+        return;
+      }
+
       setLoading(true);
       setError('');
 
-      // Log the Razorpay key to verify it's loaded
+      // Debug logging
+      console.log('Form data:', { fullName, email, whatsapp, countryCode });
+      console.log('Form validation:', { isFormValid, isFullNameValid, isWhatsappValid, isEmailValid });
       console.log('Razorpay Key:', import.meta.env.VITE_RAZORPAY_KEY_ID);
+      console.log('Environment:', { PROD: import.meta.env.PROD, DEV: import.meta.env.DEV });
+      
+      // Check if Razorpay key is available
+      if (!import.meta.env.VITE_RAZORPAY_KEY_ID) {
+        throw new Error('Razorpay key not found. Please check your environment variables.');
+      }
 
       // Create customer and order
       const apiUrl = import.meta.env.PROD 
         ? 'https://speaksutra-backend.onrender.com/api/create-customer-order'
         : 'http://localhost:3000/api/create-customer-order';
+      
+      console.log('Making API call to:', apiUrl);
       
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -46,11 +63,14 @@ const PricingPage = () => {
         }),
       });
 
+      console.log('API Response status:', response.status);
+      console.log('API Response headers:', response.headers);
+
       const data = await response.json();
       console.log('Order creation response:', data);
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create order');
+        throw new Error(data.error || `Failed to create order: ${response.status} ${response.statusText}`);
       }
 
       // Initialize Razorpay
@@ -159,10 +179,13 @@ const PricingPage = () => {
 
       // Check if Razorpay is available
       if (typeof window.Razorpay === 'undefined') {
-        throw new Error('Razorpay SDK failed to load');
+        console.error('Razorpay SDK not loaded. Available on window:', Object.keys(window));
+        throw new Error('Razorpay SDK failed to load. Please refresh the page and try again.');
       }
 
+      console.log('Razorpay SDK loaded successfully');
       const razorpay = new (window as any).Razorpay(options);
+      console.log('Razorpay instance created, opening payment modal...');
       razorpay.open();
     } catch (error) {
       console.error('Error initiating payment:', error);
@@ -278,8 +301,27 @@ const PricingPage = () => {
               </form>
             </div>
 
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-center">
+                {error}
+              </div>
+            )}
+            
+            {/* Debug info - remove in production */}
+            <div className="bg-gray-100 border border-gray-300 text-gray-700 px-4 py-2 rounded mb-4 text-center text-sm">
+              Form Status: {isFormValid ? '✅ Valid' : '❌ Invalid'} | 
+              Name: {isFullNameValid ? '✅' : '❌'} | 
+              WhatsApp: {isWhatsappValid ? '✅' : '❌'} | 
+              Email: {isEmailValid ? '✅' : '❌'}
+            </div>
+            
             <button
-              onClick={handleEnrollNow}
+              onClick={() => {
+                console.log('Button clicked!');
+                console.log('Form state:', { fullName, email, whatsapp, countryCode });
+                console.log('Validation state:', { isFormValid, isFullNameValid, isWhatsappValid, isEmailValid });
+                handleEnrollNow();
+              }}
               disabled={!isFormValid || loading}
               className="w-full bg-accent-500 hover:bg-accent-600 text-white py-4 px-8 rounded-full font-semibold text-xl transition-colors flex flex-col items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed mb-2"
             >
